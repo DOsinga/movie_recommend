@@ -1,0 +1,79 @@
+<script type="text/markdown" id="info">
+name: Visual Movie Recommender
+description: >
+  A movie recommender trained not on people rating movies, but solely on the outgoing links from the Wikipedia article. By forcing the recommendation vectors into two dimensions, we make it possible to explore movies and their neighbors.
+github: notebooks/blob/master/Movie_Recommendations.ipynb
+</script>
+
+<link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.0/themes/smoothness/jquery-ui.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.0/jquery-ui.min.js"></script>
+
+<p>You can explore movies using the zoomable picture below, or if you want recommendations based on a
+specific movie, enter it below:</p>
+
+
+<script type="text/javascript">
+  $(function() {
+    $("#movie").autocomplete({
+      source: "/projects/movie_recommend/autocomplete",
+      select: function(event, ui) {
+        $("#movie").val(ui.item.label);
+      },
+      minLength: 2
+    });
+  });
+
+</script>
+
+<br/>
+<form method="get">
+    <label>Pick a movie:
+        <input value="{{ movie }}" id="movie" name="movie">
+    </label>
+    <input type="submit" value="Go!">
+</form>
+<br/>
+
+{% if top_movie %}
+    <p><b>Best Match</b>: {{ top_movie }}</p>
+    {% if other_movies %}
+        <br/>
+        Other options:
+        <br/>
+        {% for other in other_movies %}
+            <a href="?movie={{ other|urlencode }}">{{ other }}</a><br/>
+        {% endfor %}
+    {% endif %}
+{% endif %}
+
+<br/>
+
+<div id="openseadragon1" style="width: 800px; height: 600px;"></div>
+
+<br/>
+{% if movies %}
+<span>Most similar movies:</span>
+<br/><br/>
+<table border="0">
+{% for movie in movies %}
+    <tr><td><a href="?movie={{ movie.0|urlencode }}">{{ movie.0 }}</a></td></tr>
+{% endfor %}
+</table>
+{% endif %}
+
+<script src="{{ static }}openseadragon.min.js"></script>
+<script type="text/javascript">
+    $(function() {
+        var viewer = OpenSeadragon({
+            id: "openseadragon1",
+            prefixUrl: "{{ static }}openseadragon/",
+            tileSources: "{{ static }}movies_osd"
+        });
+        {% if movie_x %}
+        viewer.addHandler('open', function() {
+            var box1 = viewer.viewport.imageToViewportRectangle({{ movie_x }}, {{ movie_y }}, {{ movie_w }}, {{ movie_h }});
+            viewer.viewport.fitBounds(box1);
+        });
+        {% endif %}
+    });
+</script>
